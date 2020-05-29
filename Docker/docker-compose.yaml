@@ -1,0 +1,57 @@
+version: '3.1'
+
+networks:
+  services-network:
+    driver: bridge
+
+services:
+  mongo:
+    container_name: mongo
+    image: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: user1
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      #    - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo-js:ro
+      - ./mongo-volume:/data/db
+    networks:
+      services-network:
+        aliases:
+          - db
+
+  mongo-express:
+    container_name: mongo-express
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: user1
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+    networks:
+      services-network:
+        aliases:
+          - express
+
+  strapi:
+    image: strapi/strapi
+    environment:
+      DATABASE_CLIENT: mongo
+      DATABASE_NAME: strapi
+      DATABASE_HOST: mongo
+      DATABASE_PORT: 27017
+      DATABASE_USERNAME: user1
+      DATABASE_PASSWORD: example
+    links:
+      - mongo:mongo
+    volumes:
+      - ./app:/srv/app
+    ports:
+      - '1337:1337'
+    networks:
+      services-network:
+        aliases:
+          - express
